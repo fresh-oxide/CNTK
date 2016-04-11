@@ -105,10 +105,42 @@ private:
 
     size_t m_currentCursor;
 
-    size_t m_i; // Fully randomized.
-    size_t m_j; // Continue randomization.
+
+#if 0
+    //
+    //                              all chunks:
+    //                          m_randomizedChunks[]
+    //  ----------+------------+---------------+---------------------+-------------
+    //            |               loaded chunks:                     |
+    //            |      m_chunkWindow[], m_sequenceWindow[]         |
+    //   unloaded +------------+------------------+------------------+ chunks to be
+    //    chunks  | randomized | in randomization | in randomization |   loaded
+    //            |            | (back window)    | (forward window) |
+    //  ----------+------------+------------------+------------------+-------------
+    //            |            |                  |                  |
+    //            |            |                  |                  | m_k
+    //            |            |                  | m_j
+    //            |            | m_i
+    //            | m_h
+    //            |            |                  |                  |
+    //            |            |                  |                  | m_chunkWindowEnd
+    //            |            |                  | m_randomizationCursor
+    //            |            | m_randomizedWindowEnd
+    //            | m_chunkWindowBegin
+    //
+    //
+    // TODO m_h: m_chunkWindowBegin
+    // TODO m_i: ?? m_randomizedWindowEnd ? m_fixedWindowEnd
+    // TODO m_j: m_randomizationCursor
+    // TODO m_k: m_chunkWindowEnd
+
+#endif
+
+
     // Index (< m_randomizedChunks.size) of the first chunk in the window(m_chunkWindow).
     size_t m_h;
+    size_t m_i; // Fully randomized.
+    size_t m_j; // Continue randomization.
 
     // Index (< m_randomizedChunks.size) of the last chunk in the window(m_chunkWindow).
     size_t m_k;
