@@ -35,15 +35,15 @@ public:
         IDataDeserializerPtr deserializer,
         ChunkRandomizerPtr chunkRandomizer);
 
-    // Resets current sequence sweep according to the seed.
+    // Resets the current sweep according to the randomization seed provided.
     void Reset(size_t seed);
 
-    // Sets current sequence cursor given the sample offset in a sweep.
-    // If the sample offset point in the middle of sequence, the cursor is moved to the sequence end,
-    // and a new sample offset is returned that points to the end of the sequence.
+    // Sets current cursor to the given sample offset.
+    // If offset is in the middle of the sequence, the next sequence is picked up.
+    // If there is no sequence, an offset outside the sweep is returned.
     size_t Seek(size_t sweepSampleOffset, size_t sweep);
 
-    // Gets next sequence descriptions.
+    // Gets next randomized sequence descriptions not exceeding the sample count.
     std::vector<RandomizedSequenceDescription> GetNextSequenceDescriptions(size_t sampleCount);
 
     // Gets current randomized chunk window.
@@ -52,26 +52,28 @@ public:
         return m_chunkWindow;
     }
 
+    // Release chunks from the chunk window that are not needed anymore.
     void ReleaseChunks();
 
 private:
     DISABLE_COPY_AND_MOVE(SequenceRandomizer);
 
+    // Randomize one more chunk if needed after the chunk cursor has been incremented.
     void RandomizeNextChunkIfNeeded();
 
-    // Validates if sequence description is valid for the current position.
+    // Checks if the randomized sequence is valid for a target position using its chunk randomization window.
     bool IsValidForPosition(size_t targetPosition, const RandomizedSequenceDescription& seqDesc) const;
 
-    // Gets randomized chunk index by the sequence position inside the sweep.
+    // Gets randomized chunk index using a sequence position in the sweep.
     size_t GetChunkIndexForSequencePosition(size_t sequencePosition) const;
 
-    // Gets randomized sequence description by the sample offset in the sweep.
+    // Gets randomized sequence by the sequence id.
     RandomizedSequenceDescription& GetRandomizedSequenceDescriptionBySequenceId(size_t sequenceId);
 
-    // Adds randomized sequences to the window.
+    // Add randomizes sequences for the chunk with a given index.
     void AddRandomizedSequencesForChunk(size_t chunkIndex);
 
-    // TODO add a comment, rename
+    // Move the chunk cursor to the next chunk, randomizing more sequences if necessary.
     void MoveChunkCursor();
 
 private:
