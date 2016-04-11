@@ -71,42 +71,32 @@ private:
     // Adds randomized sequences to the window.
     void AddRandomizedSequencesForChunk(size_t chunkIndex);
 
-private:
+    // TODO add a comment, rename
     void MoveChunkCursor();
 
-    // Randomized chunks.
-    const std::vector<RandomizedChunk>& m_randomizedChunks;
-
-    // A rolling windows of randomized chunks.
-    // Which chunk to load is decided by the BlockRandomizer (i.e. decimation based on chunk).
-    std::deque<RandomizedChunk> m_chunkWindow;
-
-    // A rolling window of randomized sequences for the chunks.
-    std::deque<std::vector<RandomizedSequenceDescription>> m_sequenceWindow;
+private:
 
     IDataDeserializerPtr m_deserializer;
-
-    // Current sequence position.
-    size_t m_currentSequencePosition;
-
-    // Current chunk position.
-    size_t m_currentChunkPosition;
 
     // Used only as a buffer to get sequence descriptions without memory reallocation.
     std::vector<SequenceDescription> m_bufferOriginalSequences;
 
-    struct ChunkInfo
-    {
-        size_t start;
-        size_t numberOfSamples;
-    };
+    // Randomized chunks.
+    const std::vector<RandomizedChunk>& m_randomizedChunks;
 
-    std::deque<ChunkInfo> m_randomizedChunkInfo;
-
-    size_t m_currentCursor;
-
-
-#if 0
+    //
+    // We randomize sequences in a rolling window over the randomized chunks.
+    // This window is organized into chunks, where the chunk indices and number of sequences
+    // are equal to the randomized chunks. The number of samples in each randomized chunk, however,
+    // may vary due to sequences being changed.
+    //
+    // The rolling window can be divided into three parts. The first part is fully randomized, and
+    // has sequences at their final position (wrt. the randomization for the sweep). Only sequences
+    // from this part are returned to the caller.
+    // The second and third part correspond to sequences that are being randomized, i.e., within
+    // which sequences may still change their position. The randomization cursor, which is located
+    // at the boundary between part 2 and 3, indicates where to continue randomization by
+    // swapping sequences forward or backward subject to randomziation window conditions.
     //
     //                              all chunks:
     //                          m_randomizedChunks[]
@@ -117,33 +107,52 @@ private:
     //    chunks  | randomized | in randomization | in randomization |   loaded
     //            |            | (back window)    | (forward window) |
     //  ----------+------------+------------------+------------------+-------------
-    //            |            |                  |                  |
-    //            |            |                  |                  | m_k
-    //            |            |                  | m_j
-    //            |            | m_i
-    //            | m_h
-    //            |            |                  |                  |
-    //            |            |                  |                  | m_chunkWindowEnd
-    //            |            |                  | m_randomizationCursor
-    //            |            | m_randomizedWindowEnd
+    //            |     ^      |                  |                  |
+    //            |     |      |                  |                  | m_chunkWindowEnd
+    //            |     |      |                  |
+    //            |     |      |                  | m_randomizationCursor
+    //            |     |      |
+    //            |     |      | m_randomizedWindowEnd
+    //            |     |
+    //            |     | m_currentChunkCursor
+    //            |
     //            | m_chunkWindowBegin
     //
     //
-    // TODO m_h: m_chunkWindowBegin
-    // TODO m_i: ?? m_randomizedWindowEnd ? m_fixedWindowEnd
-    // TODO m_j: m_randomizationCursor
-    // TODO m_k: m_chunkWindowEnd
 
-#endif
+    // A rolling windows of randomized chunks.
+    // Which chunk to load is decided by the BlockRandomizer (i.e. decimation based on chunk).
+    std::deque<RandomizedChunk> m_chunkWindow;
 
+    // A rolling window of randomized sequences for the chunks.
+    std::deque<std::vector<RandomizedSequenceDescription>> m_sequenceWindow;
 
-    // Index (< m_randomizedChunks.size) of the first chunk in the window(m_chunkWindow).
-    size_t m_h;
-    size_t m_i; // Fully randomized.
-    size_t m_j; // Continue randomization.
+    struct ChunkInfo
+    {
+        size_t start;
+        size_t numberOfSamples;
+    };
 
-    // Index (< m_randomizedChunks.size) of the last chunk in the window(m_chunkWindow).
-    size_t m_k;
+    // A rolling window of sample start positions and length for chunks which had their
+    // sequenced randomized.
+    std::deque<ChunkInfo> m_randomizedChunkInfo;
+
+    // Index of the first chunk in the window (inclusive).
+    size_t m_chunkWindowBegin;
+
+    // Indices of chunk, sequence, and sample from which to return data to caller.
+    size_t m_currentChunkCursor;
+    size_t m_currentSequenceCursor;
+    size_t m_currentSampleCursor;
+
+    // Index of the last fully randomized chunk in the window (exclusive).
+    size_t m_randomizedWindowEnd;
+
+    // Index of the chunk in the window where to continue randomizing sequences.
+    size_t m_randomizationCursor;
+
+    // Index of the last chunk in the window (exclusive).
+    size_t m_chunkWindowEnd;
 };
 
 typedef std::shared_ptr<SequenceRandomizer> SequenceRandomizerPtr;
