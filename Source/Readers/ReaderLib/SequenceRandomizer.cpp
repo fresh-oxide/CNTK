@@ -10,9 +10,9 @@
 #include <utility>
 #include <deque>
 
-#include "DataReader.h"
-#include <random>
-#include <set>
+//#include "DataReader.h"
+//#include <random>
+//#include <set>
 
 namespace Microsoft { namespace MSR { namespace CNTK {
 
@@ -35,6 +35,7 @@ namespace Microsoft { namespace MSR { namespace CNTK {
         m_chunkWindowEnd(0),
         m_currentSequenceCursor(0),
         m_currentChunkCursor(0),
+        m_currentSampleCursor(0),
         m_deserializer(deserializer)
     {
         size_t max = 0;
@@ -58,8 +59,10 @@ namespace Microsoft { namespace MSR { namespace CNTK {
         m_chunkWindow.clear();
         m_randomizedChunkInfo.clear();
         m_chunkWindowBegin = m_randomizedWindowEnd = m_randomizationCursor = m_chunkWindowEnd = 0;
-        m_currentSequenceCursor = 0;
+
         m_currentChunkCursor = 0;
+        m_currentSequenceCursor = 0;
+        m_currentSampleCursor = 0;
 
         // Prepare the chunk for reading
         RandomizeNextChunkIfNeeded();
@@ -119,9 +122,8 @@ namespace Microsoft { namespace MSR { namespace CNTK {
     // Release chunks from the chunk window that are not needed anymore.
     void SequenceRandomizer::ReleaseChunks()
     {
-        // TODO: we should drop chunks, but firstly make sure that they are not used any more.
-        // That means the sequence description that we have got from the previous call can still be in the BlockRandomizer,
-        // so we need to make sure that the clean up code below is used only when the chunk is not required anymore.
+        // We should drop chunks, but firstly make sure that they are not used any more.
+        // That means the sequence description that we have got from the previous call can still be in the BlockRandomizer.
         size_t currentChunk = std::min(m_currentChunkCursor, m_randomizedChunks.size() - 1);
         size_t candidateToUnload = m_chunkWindowBegin;
         while (candidateToUnload < m_randomizedChunks.size() &&
@@ -171,15 +173,8 @@ namespace Microsoft { namespace MSR { namespace CNTK {
             AddRandomizedSequencesForChunk(i);
         }
 
-        size_t firstSequencePositionToRandomize = 0;
-        if (m_randomizationCursor == 0)
-        {
-            firstSequencePositionToRandomize = 0;
-        }
-        else
-        {
-            firstSequencePositionToRandomize = m_randomizedChunks[m_randomizationCursor - 1].SequenceEndPosition();
-        }
+        size_t firstSequencePositionToRandomize =
+            m_randomizationCursor == 0 ? 0 : m_randomizedChunks[m_randomizationCursor - 1].SequenceEndPosition();
 
         size_t endSequencePosToRandomize = m_randomizedChunks[nextRandomizationCursor - 1].SequenceEndPosition();
         for (size_t t = firstSequencePositionToRandomize; t < endSequencePosToRandomize; ++t)
@@ -284,7 +279,7 @@ namespace Microsoft { namespace MSR { namespace CNTK {
             m_currentSampleCursor = m_randomizedChunkInfo[index].start;
 
             // TODO most of the time, we can advance to the right sequence here
-            //      (unless we need to go past the randomized chunk window)
+            // (unless we need to go past the randomized chunk window)
         }
 
         // Advance sequence by sequence until the desire offset is reached.

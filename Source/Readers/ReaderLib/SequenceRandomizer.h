@@ -38,15 +38,15 @@ public:
     // Resets the current sweep according to the randomization seed provided.
     void Reset(size_t seed);
 
-    // Sets current cursor to the given sample offset.
-    // If offset is in the middle of the sequence, the next sequence is picked up.
-    // If there is no sequence, an offset outside the sweep is returned.
+    // Sets the current cursor to the given sample offset.
+    // If the offset is in the middle of a sequence, the next sequence is picked up.
+    // If the offset points in the middle of last sequence, the end of the sweep is returned.
     size_t Seek(size_t sweepSampleOffset, size_t sweep);
 
-    // Gets next randomized sequence descriptions not exceeding the sample count.
+    // Gets the next randomized sequence descriptions not exceeding the sample count.
     std::vector<RandomizedSequenceDescription> GetNextSequenceDescriptions(size_t sampleCount);
 
-    // Gets current randomized chunk window.
+    // Gets the current randomized chunk window.
     const std::deque<RandomizedChunk>& GetChunkWindow() const
     {
         return m_chunkWindow;
@@ -88,17 +88,18 @@ private:
 
     //
     // We randomize sequences in a rolling window over the randomized chunks.
-    // This window is organized into chunks, where the chunk indices and number of sequences
-    // are equal to the randomized chunks. The number of samples in each randomized chunk, however,
-    // may vary due to sequences being changed.
+    // During randomization, sequences will be moved between different chunks in the window, but the total number
+    // of sequences in any chunk stays the same.
+    // The number of samples in each randomized chunk, however, may vary due to sequences being changed.
     //
-    // The rolling window can be divided into three parts. The first part is fully randomized, and
+    // NOTE: We do this in order to support the same randomization as used on all regression tests.
+    // The rolling window is divided into three parts. The first part is fully randomized, and
     // has sequences at their final position (wrt. the randomization for the sweep). Only sequences
-    // from this part are returned to the caller.
+    // from this part are returned to the caller (GetNextSequenceDescriptions).
     // The second and third part correspond to sequences that are being randomized, i.e., within
     // which sequences may still change their position. The randomization cursor, which is located
     // at the boundary between part 2 and 3, indicates where to continue randomization by
-    // swapping sequences forward or backward subject to randomziation window conditions.
+    // swapping sequences forward or backward depending on the randomization window of a particular chunk.
     //
     //                              all chunks:
     //                          m_randomizedChunks[]
@@ -127,6 +128,7 @@ private:
     std::deque<RandomizedChunk> m_chunkWindow;
 
     // A rolling window of randomized sequences for the chunks.
+    // Contains randomized sequences from m_chunkWindow chunks.
     std::deque<std::vector<RandomizedSequenceDescription>> m_sequenceWindow;
 
     struct ChunkInfo
@@ -135,7 +137,7 @@ private:
         size_t numberOfSamples;
     };
 
-    // A rolling window of sample start positions and length for chunks which had their
+    // A rolling window of sample start positions and length for chunks that had their
     // sequenced randomized.
     std::deque<ChunkInfo> m_randomizedChunkInfo;
 
