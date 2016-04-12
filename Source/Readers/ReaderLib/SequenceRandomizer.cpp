@@ -10,10 +10,6 @@
 #include <utility>
 #include <deque>
 
-//#include "DataReader.h"
-//#include <random>
-//#include <set>
-
 namespace Microsoft { namespace MSR { namespace CNTK {
 
     // NOTE: This is an old code, used for legacy randomization to make sure we preserve the same behavior for the tests.
@@ -302,26 +298,11 @@ namespace Microsoft { namespace MSR { namespace CNTK {
     // Gets randomized chunk index using a sequence position in the sweep.
     size_t SequenceRandomizer::GetChunkIndexForSequencePosition(size_t sequencePosition) const
     {
-        /*auto result = std::upper_bound(
+        auto result = std::upper_bound(
             m_randomizedChunks.begin(),
             m_randomizedChunks.end(),
             sequencePosition,
             [](size_t sp, const RandomizedChunk& c) { return sp < c.m_sequencePositionStart; });
-        return result - 1 - m_randomizedChunks.begin();*/
-
-        struct PositionConverter
-        {
-            size_t m_position;
-            PositionConverter(const RandomizedChunk & chunk) : m_position(chunk.m_sequencePositionStart) {};
-            PositionConverter(size_t sequencePosition) : m_position(sequencePosition) {};
-        };
-
-        auto result = std::lower_bound(m_randomizedChunks.begin(), m_randomizedChunks.end(), sequencePosition,
-            [](const PositionConverter& a, const PositionConverter& b)
-        {
-            return a.m_position <= b.m_position;
-        });
-
         return result - 1 - m_randomizedChunks.begin();
     }
 
