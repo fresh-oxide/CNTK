@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(BlockRandomizerOneEpochWithChunks2)
         actual.begin(), actual.end());
 }
 
-BOOST_AUTO_TEST_CASE(BlockRandomizerNoCrash)
+BOOST_AUTO_TEST_CASE(BlockRandomizerChaosMonkey)
 {
     const int seed = 42;
     const int numChunks = 100;
@@ -278,6 +278,7 @@ BOOST_AUTO_TEST_CASE(BlockRandomizerNoCrash)
     auto mockDeserializer = std::make_shared<MockDeserializer>(numChunks, numSequencesPerChunk, data);
 
     auto randomizer = std::make_shared<BlockRandomizer>(0, windowSize, mockDeserializer, BlockRandomizer::DecimationMode::chunk, false);
+
     for (int t = 0; t < 100; t++)
     {
         EpochConfiguration epochConfiguration;
@@ -285,8 +286,9 @@ BOOST_AUTO_TEST_CASE(BlockRandomizerNoCrash)
         do
         {
             epochConfiguration.m_workerRank = distr(rng) - 1;
+        }
+        while (epochConfiguration.m_numberOfWorkers <= epochConfiguration.m_workerRank);
 
-        } while (epochConfiguration.m_numberOfWorkers <= epochConfiguration.m_workerRank);
         epochConfiguration.m_minibatchSizeInSamples = 0; // don't care
         epochConfiguration.m_totalEpochSizeInSamples = data.size() / distr(rng);
         epochConfiguration.m_epochIndex = distr(rng);

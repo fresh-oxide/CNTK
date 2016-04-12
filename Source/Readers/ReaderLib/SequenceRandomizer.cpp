@@ -300,9 +300,15 @@ namespace Microsoft { namespace MSR { namespace CNTK {
     }
 
     // Gets randomized chunk index using a sequence position in the sweep.
-    // TODO: upper bound should be used instead.
     size_t SequenceRandomizer::GetChunkIndexForSequencePosition(size_t sequencePosition) const
     {
+        /*auto result = std::upper_bound(
+            m_randomizedChunks.begin(),
+            m_randomizedChunks.end(),
+            sequencePosition,
+            [](size_t sp, const RandomizedChunk& c) { return sp < c.m_sequencePositionStart; });
+        return result - 1 - m_randomizedChunks.begin();*/
+
         struct PositionConverter
         {
             size_t m_position;

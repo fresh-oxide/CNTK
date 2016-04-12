@@ -49,6 +49,14 @@ BlockRandomizer::BlockRandomizer(
 // Start a new epoch.
 void BlockRandomizer::StartEpoch(const EpochConfiguration& config)
 {
+    // In case the worker rank will change in the future (and for tests), we should reset the chunk information
+    // if rank changes between the epochs.
+    if (m_config.m_workerRank != config.m_workerRank || m_config.m_numberOfWorkers != config.m_numberOfWorkers)
+    {
+        m_chunks.clear();
+        m_lastSeenChunkId = SIZE_MAX;
+    }
+
     m_config = config;
     if (config.m_totalEpochSizeInSamples == requestDataSize)
     {
