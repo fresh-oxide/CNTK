@@ -54,7 +54,11 @@ namespace Microsoft { namespace MSR { namespace CNTK {
         m_sequenceWindow.clear();
         m_chunkWindow.clear();
         m_randomizedChunkInfo.clear();
-        m_chunkWindowBegin = m_randomizedWindowEnd = m_randomizationCursor = m_chunkWindowEnd = 0;
+
+        m_chunkWindowBegin = 0;
+        m_randomizedWindowEnd = 0;
+        m_randomizationCursor = 0;
+        m_chunkWindowEnd = 0;
 
         m_currentChunkCursor = 0;
         m_currentSequenceCursor = 0;
