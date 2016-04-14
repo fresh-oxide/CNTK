@@ -4,7 +4,7 @@ tags:
     # In BVT, run Release GPU
     - bvt-e (build_sku=='gpu') and (device=='gpu') and (flavor=='release') 
     # In Nightly on Linux, run Debug GPU in addition
-    - nightly-e (build_sku=='gpu') and (device=='gpu')
+    - nightly-e
 
 testCases:
   CNTK Run must be completed:
